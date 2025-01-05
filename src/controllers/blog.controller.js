@@ -80,13 +80,8 @@ const updateBlogImage = asyncHandler( async (req, res) => {
         
     }
 
-    const blogImageLocalPath = req.files?.path
+    const blogImageLocalPath = req.file?.path
 
-    if (mongoose.isValidObjectId(blogId)) {
-        throw new ApiError("400", "Invalid blog id");
-    }
-
-    
     if (!blogImageLocalPath) {
         throw new ApiError("400", "Blog image file is missing");
     }
@@ -97,7 +92,7 @@ const updateBlogImage = asyncHandler( async (req, res) => {
         throw new ApiError("404", "No Blog found to be updated");
     }
 
-    if (blog.blogImage) {
+    if (blog?.blogImage) {
         const publicId =  blog.blogImage.split('/').slice(-1)[0].split('.')[0];
         try {
                 await deleteFromCloudinary(publicId)
