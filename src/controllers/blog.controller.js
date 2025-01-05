@@ -6,7 +6,7 @@ import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
 import {Blog} from "../models/blog.model.js"
 import mongoose,{isValidObjectId} from "mongoose";
 import {User} from "../models/user.model.js";
-import { isValidTrimmed } from "../utils/isValidTrimmed.js";
+import { isValidTrimmed } from "../utils/Validation.js";
 
 
 const publishBlog = asyncHandler(async (req, res) => {
@@ -198,26 +198,6 @@ const getBlogById = asyncHandler(async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-// if (blogToBeDeleted?.blogImage) {
-//     const publicId = blogToBeDeleted.blogImage.split('/').slice(-1)[0].split('.')[0]
-//     try {
-//         await deleteFromCloudinary(publicId)
-        
-//     } catch (error) {
-//         throw new ApiError("500", "Could not delete the blog image from cloudinary");
-//     }
-
-// }
-
+export {
+    publishBlog
+}

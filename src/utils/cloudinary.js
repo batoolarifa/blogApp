@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
-import { ApiError } from './ApiError';
+import { ApiError } from './ApiError.js';
 
 
 
@@ -18,7 +18,7 @@ const uploadOnCloudinary = async (localFilePath) => {
     })
     console.log("File uploaded to cloudinary",response.url);
     fs.unlinkSync(localFilePath)
-    return response.url;
+    return response;
     
     
    } catch (error) {

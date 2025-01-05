@@ -1,5 +1,4 @@
 import mongoose,{Schema} from "mongoose";
-
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -28,6 +27,12 @@ const userSchema = new Schema({
     type: String,
    
    },
+   blogHistory:[
+    {
+        type: Schema.Types.ObjectId,
+        ref: "Blog",
+    }
+   ],
    
    profilePicture:{
     type: String,
@@ -59,15 +64,13 @@ const userSchema = new Schema({
    facebookUrl:{
     type:String,
    },
-   Tagline:{
+   tagline:{
     type: String,
     required: true,
    },
-   About:{
+   about:{
     type: String,
     required: true,
-    minlength: 100,
-    maxlength: 2000,
     validate: {
         validator: function(value) {
             return value.trim().length >= 100 && value.trim().length <= 2000;
@@ -82,12 +85,16 @@ const userSchema = new Schema({
 
 userSchema.pre("save", async function(next) {
     if(!this.isModified("password")) return next();
-    this.password = bcrypt.hash(this.password, 10);
+    
+    
+    this.password = await bcrypt.hash(this.password, 10);
+   
     next();
     
 })
 
 userSchema.methods.isPasswordCorrect = async function (password) {
+    
     return await bcrypt.compare(password, this.password);
 }
 
