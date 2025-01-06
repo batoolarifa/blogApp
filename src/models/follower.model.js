@@ -2,7 +2,7 @@ import mongoose,{Schema} from "mongoose";
 
 
 const followerSchema = new Schema({
-    follower:{
+    followers:{
         type:Schema.Types.ObjectId,
         ref: "User",
     },

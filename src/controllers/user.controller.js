@@ -363,6 +363,135 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 })
 
 
+
+
+
+const getUserFollowerProfile = asyncHandler(async (req, res) => {
+    const {username} = req.params
+
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username is missing")
+    }
+
+     const follower = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup:{
+                from: "followers",
+                localField: "_id",
+                foreignField: "following",
+                as: "followers"
+
+            }
+        },
+        {
+            $lookup: {
+                from: "followers",
+                localField: "_id",
+                foreignField: "followers",
+                as: "followedTo"
+            }
+        }, {
+            $addFields:{
+                followersCount: {
+                    $size: "$followers"
+                },
+                followedToCount: {
+                    $size: "$followedTo"
+                },
+                isFollowed:{
+                    $cond:{
+                        if: {$in: [req.user?._id, "followers.followers"]},
+                        then:true,
+                        else:false
+                    }
+                }
+            }
+        }, {
+            $project:{
+                fullName:1,
+                username:1,
+                followersCount:1,
+                followedToCount:1,
+                isFollowed:1,
+                profilePicture:1,
+                coverImage:1
+                
+
+                }
+        }
+     ])
+
+     console.log("followers are: ",follower)
+
+     if (!follower?.length) {
+        throw new ApiError(404, "No followers found")
+     }
+
+     return res.status(200)
+     .json(new ApiResponse(200, follower[0], " User followers fetched successfully"))
+
+})
+
+
+const getBlogHistory = asyncHandler(async (req, res) => {  
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        }, {
+            $lookup: {
+                from: "blogs",
+                localField: "blogHistory",
+                foreignField: "_id",
+                as: "blogHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from:"users",
+                            localField:"blogAuthor",
+                            foreignField:"_id",
+                            as:"blogAuthor",
+                            pipeline:[
+                                {
+                                    $project: {
+                                        fullName:1,
+                                        username:1,
+                                        profilePicture:1
+                                    }
+                                }
+                            ]
+                        }
+                    }, 
+                    {
+                        $addFields:{
+                            blogAuthor: {
+                                $first: "$blogAuthor"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    console.log("user blog history: ",user)
+
+    if (!user?.length) {
+        throw new ApiError(404, "No blog history found")
+        
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200, user[0].blogHistory, " User blog history fetched successfully"))
+ })
+
+
 export {
     registerUser,
     loginUser,
@@ -372,7 +501,9 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserProfilePicture,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserFollowerProfile,
+    getBlogHistory
 
     
 }
