@@ -33,6 +33,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 const deleteFromCloudinary = async (publicId) => {
     try {
         await cloudinary.uploader.destroy(publicId);
+        console.log("File deleted from cloudinary");
         
     } catch (error) {
         throw new ApiError(500,"Error deleting the blog image from cloudinary", error.message)

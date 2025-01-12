@@ -9,7 +9,7 @@ import {  registerUser,
           updateUserProfilePicture, 
           updateUserCoverImage, 
           getUserFollowerProfile , 
-          getBlogHistory
+          getBlogHistory,
 }
 
 from "../controllers/user.controller.js";
@@ -38,9 +38,9 @@ router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT,changeCurrentPassword)
 router.route("/current-user").get(verifyJWT,getCurrentUser)
 router.route("/update-account").patch(verifyJWT,updateAccountDetails)
-router.route("/profile-picture").patch(verifyJWT,upload.single("profilePicture"),updateUserProfilePicture)
+router.route("/update-profile-pic").patch(verifyJWT,upload.single("profilePicture"),updateUserProfilePicture)
 router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage)
-router.route("/follower/:username").get(verifyJWT,getUserFollowerProfile)
+router.route("/f/:username?").get(verifyJWT,getUserFollowerProfile)
 router.route("/blog-history").get(verifyJWT,getBlogHistory)
 
 

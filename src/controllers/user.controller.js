@@ -7,6 +7,7 @@ import fs from "fs";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {validateEmail} from "../utils/Validation.js"
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 
@@ -117,8 +118,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findOne({email})
-    console.log("Stored password in database:", user.password);
-
+    
 
     if (!user) {
         throw new ApiError(404, "User not found")
@@ -188,7 +188,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         if (!user) {
             throw new ApiError(401, "Invalid refresh token")
         }
-    
+
+                
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or used") 
         }
@@ -202,7 +203,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     
         return res.status(200)
                   .cookie("accessToken", accessToken, options)
-                  .cookie("refreshToken", refreshToken, options)
+                  .cookie("refreshToken", newRefreshToken, options)
                   .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access token refreshed successfully"))
         
     
@@ -254,7 +255,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     if (linkdenUrl) fieldsToUpdate.linkdenUrl = linkdenUrl
 
     if (Object.keys(fieldsToUpdate).length === 0) {
-        throw new ApiError(400, "Atleast one field must be provided")
+        throw new ApiError(400, "Atleast one field must be provided for updating the account details")
         
     }
 
@@ -280,7 +281,7 @@ const updateUserProfilePicture = asyncHandler(async (req, res) => {
     }
 
     if(req.user?.profilePicture){
-        const publicId = user.profilePicture.split('/').slice(-1)[0].split('.')[0];
+        const publicId = req.user?.profilePicture.split('/').slice(-1)[0].split('.')[0];
 
         try {
             await deleteFromCloudinary(publicId)
@@ -298,7 +299,7 @@ const updateUserProfilePicture = asyncHandler(async (req, res) => {
 
     }
 
-    const uodatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -324,7 +325,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     }
 
     if(req.user?.coverImage){
-        const publicId = user.coverImage.split('/').slice(-1)[0].split('.')[0];
+        const publicId = req.user?.coverImage.split('/').slice(-1)[0].split('.')[0];
 
         try {
             await deleteFromCloudinary(publicId)
@@ -369,9 +370,18 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 const getUserFollowerProfile = asyncHandler(async (req, res) => {
     const {username} = req.params
 
+    
     if (!username?.trim()) {
         throw new ApiError(400, "Username is missing")
     }
+
+    const isValidUser = await User.findOne({username: username?.toLowerCase()})
+    if (!isValidUser) { 
+        throw new ApiError(400, "Invalid username")
+        
+    }
+
+   
 
      const follower = await User.aggregate([
         {
@@ -381,7 +391,7 @@ const getUserFollowerProfile = asyncHandler(async (req, res) => {
         },
         {
             $lookup:{
-                from: "followers",
+                from: "followerships",
                 localField: "_id",
                 foreignField: "following",
                 as: "followers"
@@ -390,7 +400,7 @@ const getUserFollowerProfile = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "followers",
+                from: "followerships",
                 localField: "_id",
                 foreignField: "followers",
                 as: "followedTo"
@@ -405,7 +415,10 @@ const getUserFollowerProfile = asyncHandler(async (req, res) => {
                 },
                 isFollowed:{
                     $cond:{
-                        if: {$in: [req.user?._id, "followers.followers"]},
+                        if: { $in: [ req.user?._id,
+                               {$ifNull: [  "$followerships.followers", [] ] }
+                            ],
+                        },
                         then:true,
                         else:false
                     }
@@ -426,10 +439,9 @@ const getUserFollowerProfile = asyncHandler(async (req, res) => {
         }
      ])
 
-     console.log("followers are: ",follower)
-
-     if (!follower?.length) {
-        throw new ApiError(404, "No followers found")
+     
+     if (!follower) {
+        throw new ApiError(404, "Something went wrong while fetching user followers")
      }
 
      return res.status(200)
@@ -480,10 +492,10 @@ const getBlogHistory = asyncHandler(async (req, res) => {
         }
     ])
 
-    console.log("user blog history: ",user)
+    
 
-    if (!user?.length) {
-        throw new ApiError(404, "No blog history found")
+    if (!user) {
+        throw new ApiError(404, "Something went wrong while fetching user blog history")
         
     }
 

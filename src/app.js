@@ -27,11 +27,16 @@ app.use(cookieParser())
 
 import userRouter from "./routes/user.routes.js";
 import blogRouter from "./routes/blog.routes.js";
-
+import commentRouter from "./routes/comment.routes.js";
+import followershipRouter from "./routes/followership.routes.js";
+import likeRouter from "./routes/like.routes.js";
 
 // routes  declaration
 
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/blogs", blogRouter)
+app.use("/api/v1/comments", commentRouter)
+app.use("/api/v1/followership", followershipRouter)
+app.use("/api/v1/likes", likeRouter)
 
 export {app}
